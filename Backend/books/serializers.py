@@ -12,11 +12,12 @@ class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
+    is_staff = serializers.BooleanField()
     gender = serializers.ChoiceField(choices=['Male', 'Female', 'Other'])
 
     class Meta:
         model = FullUser
-        fields = ('id', 'username', 'password', 'first_name', 'last_name', 'email', 'gender')
+        fields = ('id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'gender')
 
     def create(self, validated_data):
         try:
@@ -26,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
                 last_name=validated_data['last_name'],
                 email=validated_data['email'],
                 gender=validated_data['gender'],
+                is_staff=False
             )
         except IntegrityError:
             raise serializers.ValidationError('A user with this username already exists.')

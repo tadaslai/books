@@ -19,12 +19,12 @@ from django.views.defaults import page_not_found
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from Backend.books import views
-from Backend.books.views import AuthorView, BookView, ReviewView, UserDetailsView, NotFoundView, custom404
-
+from Backend.books.views import AuthorView, BookView, ReviewView, UserDetailsView, NotFoundView, custom404, LoginView
 
 #method not allowed kai random url 405
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', LoginView.as_view(), name='login'),
     path('user-details/', UserDetailsView.as_view(), name='user-details'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

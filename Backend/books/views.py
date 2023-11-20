@@ -3,53 +3,46 @@ import requests
 
 import pytz
 from django.contrib.auth import authenticate
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, status, permissions
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from Backend.books.models import FullUser, Author, Book, Review
 from Backend.books.serializers import UserSerializer, AuthorSerializer, BookSerializer, ReviewSerializer
 from rest_framework.views import APIView
 
-class UserDetailsView(APIView):
-    permission_classes = [IsAuthenticated]
 
+class IsStaffPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_staff
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True
+
+
+class UserDetailsView(APIView):
     def get(self, request):
         user = request.user
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
-def login(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        username = data.get('username')
-        password = data.get('password')
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            token = user.auth_token.key
-            response_data = {
-                'token': token,
-                'userId': user.id,
-                'user': {
-                    'username': user.username,
-                    'email': user.email,
-                }
-            }
-            return JsonResponse(response_data)
-        else:
-            return JsonResponse({'error': 'Invalid username or password'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+class LoginView(TokenObtainPairView):
+    def post(self, request, **kwargs):
+        user = request.user
+        self.serializer = UserSerializer(user)
+        super().post(self, request, **kwargs)
 
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = FullUser.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -75,6 +68,8 @@ class AuthorView(APIView):
             return Response(serializer.data)
 
     def post(self, request):
+        self.permission_classes = [IsStaffPermission]
+
         # Create a new author
         serializer = AuthorSerializer(data=request.data)
         if serializer.is_valid():
@@ -83,6 +78,8 @@ class AuthorView(APIView):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def put(self, request, author_id):
+        self.permission_classes = [IsAuthenticated, IsStaffPermission]
+
         try:
             author = Author.objects.get(pk=author_id)
         except Author.DoesNotExist:
@@ -95,6 +92,8 @@ class AuthorView(APIView):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def delete(self, request, author_id):
+        self.permission_classes = [IsAuthenticated, IsStaffPermission]
+
         try:
             author = Author.objects.get(pk=author_id)
         except Author.DoesNotExist:
@@ -142,6 +141,7 @@ class BookView(APIView):
             return Response(data)
 
     def post(self, request, author_id=None):
+        self.permission_classes = [IsAuthenticated, IsStaffPermission]
         serializer = BookSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -149,6 +149,8 @@ class BookView(APIView):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def put(self, request, book_id, author_id=None):
+        self.permission_classes = [IsAuthenticated, IsStaffPermission]
+
         try:
             book = Book.objects.get(pk=book_id)
         except Book.DoesNotExist:
@@ -161,6 +163,8 @@ class BookView(APIView):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def delete(self, request, book_id, author_id=None):
+        self.permission_classes = [IsAuthenticated, IsStaffPermission]
+
         try:
             book = Book.objects.get(pk=book_id)
         except Book.DoesNotExist:
@@ -228,14 +232,18 @@ class ReviewView(APIView):
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 def custom404(request, exception=None):
     return JsonResponse({
         'status_code': 404,
         'error': 'The resource was not found'
     })
+
+
 class NotFoundView(APIView):
     def get(self, request):
         Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @csrf_exempt
 def method_not_allowed(request, *args, **kwargs):
