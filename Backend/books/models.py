@@ -7,7 +7,6 @@ class FullUser(AbstractUser):
         MALE = 'Male'
         FEMALE = 'Female'
         OTHER = 'Other'
-
     gender = models.CharField(max_length=255, choices=Gender.choices)
 
     def __str__(self):

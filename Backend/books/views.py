@@ -69,7 +69,8 @@ class AuthorView(APIView):
 
     def post(self, request):
         self.permission_classes = [IsStaffPermission]
-
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         # Create a new author
         serializer = AuthorSerializer(data=request.data)
         if serializer.is_valid():
