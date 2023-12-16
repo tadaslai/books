@@ -14,14 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
-from django.views.defaults import page_not_found
+from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from Backend.books import views
-from Backend.books.views import AuthorView, BookView, ReviewView, UserDetailsView, NotFoundView, custom404, LoginView
+from Backend.books.views import AuthorView, BookView, ReviewView, UserDetailsView, LoginView
 
-#method not allowed kai random url 405
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', LoginView.as_view(), name='login'),
@@ -31,6 +29,7 @@ urlpatterns = [
     path('authors/', AuthorView.as_view(), name='author-list'),
     path('authors/<int:author_id>/', AuthorView.as_view(), name='author-detail'),
     path('books/', BookView.as_view(), name='book-list'),
+    path('books/<int:book_id>/', BookView.as_view(), name='book-single'),
     path('author/<int:author_id>/books/', BookView.as_view(), name='book-list'),
     path('author/<int:author_id>/books/<int:book_id>/', BookView.as_view(), name='book-detail'),
     path('reviews/<int:review_id>/', ReviewView.as_view(), name='review-single'),
