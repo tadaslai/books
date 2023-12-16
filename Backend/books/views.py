@@ -202,6 +202,8 @@ class ReviewView(APIView):
                 serializer = ReviewSerializer(review)
                 review_data = serializer.data
                 review_data['book_title'] = review.book.title
+                review_data['creator'] = review.user.username
+
                 data.append(review_data)
             return Response(data)
 
