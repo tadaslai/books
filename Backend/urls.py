@@ -33,6 +33,7 @@ urlpatterns = [
     path('books/', BookView.as_view(), name='book-list'),
     path('author/<int:author_id>/books/', BookView.as_view(), name='book-list'),
     path('author/<int:author_id>/books/<int:book_id>/', BookView.as_view(), name='book-detail'),
+    path('reviews/<int:review_id>/', ReviewView.as_view(), name='review-single'),
     path('reviews/', ReviewView.as_view(), name='review-list'),
     path('author/<int:author_id>/book/<int:book_id>/reviews', ReviewView.as_view(), name='review-detail'),
     path('author/<int:author_id>/book/<int:book_id>/reviews/<int:review_id>/', ReviewView.as_view(), name='review-detail'),
